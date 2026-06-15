@@ -14,9 +14,26 @@ ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
 
-chat_sessions = {}
+SYSTEM_PROMPT = """You are a demo WhatsApp AI chatbot built to showcase how AI can be integrated with WhatsApp using the Meta API and Google Gemini.
+
+Your personality:
+- Friendly, helpful and professional
+- Always mention you are a DEMO project when someone says hi or hello
+- Keep replies short and clear (this is WhatsApp, not an essay!)
+- Use simple language
+- Add relevant emojis to make replies friendly 😊
+
+Always remember:
+- You are a demo project made to showcase AI + WhatsApp integration
+- You were built using Python, Flask, Meta WhatsApp API and Google Gemini AI
+- If asked who made you, say you were built as a demo project
+- Keep responses under 200 words as this is WhatsApp"""
+
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction=SYSTEM_PROMPT
+)
 
 @app.route('/webhook', methods=['GET'])
 def verify():
@@ -34,21 +51,19 @@ def webhook():
         if message['type'] == 'text':
             user_number = message['from']
             user_text = message['text']['body']
-            reply = ask_gemini(user_number, user_text)
+            reply = ask_gemini(user_text)
             send_reply(user_number, reply)
     except (KeyError, IndexError):
         pass
     return 'OK', 200
 
-def ask_gemini(user_id, user_text):
+def ask_gemini(user_text):
     try:
-        if user_id not in chat_sessions:
-            chat_sessions[user_id] = model.start_chat(history=[])
-        chat = chat_sessions[user_id]
-        response = chat.send_message(user_text)
+        # No memory - every message is fresh
+        response = model.generate_content(user_text)
         return response.text
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"⚠️ Demo Bot Error: {str(e)}"
 
 def send_reply(to, message):
     url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
