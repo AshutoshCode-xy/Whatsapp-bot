@@ -14,6 +14,12 @@ PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
+# Debug - check variables loaded
+print(f"✅ PHONE_NUMBER_ID: {PHONE_NUMBER_ID}")
+print(f"✅ ACCESS_TOKEN exists: {bool(ACCESS_TOKEN)}")
+print(f"✅ GEMINI_API_KEY exists: {bool(GEMINI_API_KEY)}")
+print(f"✅ VERIFY_TOKEN: {VERIFY_TOKEN}")
+
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 SYSTEM_PROMPT = """You are a demo WhatsApp AI chatbot built to showcase how AI can be integrated with WhatsApp using the Meta API and Google Gemini.
@@ -33,22 +39,29 @@ Always remember:
 def verify():
     token = request.args.get('hub.verify_token')
     challenge = request.args.get('hub.challenge')
+    print(f"Webhook verify attempt - token: {token}")
     if token == VERIFY_TOKEN:
+        print("✅ Webhook verified!")
         return challenge
+    print("❌ Webhook verification failed!")
     return 'Invalid token', 403
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
+    print(f"📩 Incoming data: {data}")
     try:
         message = data['entry'][0]['changes'][0]['value']['messages'][0]
         if message['type'] == 'text':
             user_number = message['from']
             user_text = message['text']['body']
+            print(f"📱 Message from {user_number}: {user_text}")
             reply = ask_gemini(user_text)
+            print(f"🤖 Gemini reply: {reply}")
             send_reply(user_number, reply)
-    except (KeyError, IndexError):
-        pass
+    except Exception as e:
+        print(f"❌ Webhook error: {str(e)}")
+        print(f"❌ Data was: {data}")
     return 'OK', 200
 
 def ask_gemini(user_text):
@@ -63,6 +76,7 @@ def ask_gemini(user_text):
         )
         return response.text
     except Exception as e:
+        print(f"❌ Gemini error: {str(e)}")
         return f"⚠️ Demo Bot Error: {str(e)}"
 
 def send_reply(to, message):
@@ -77,7 +91,8 @@ def send_reply(to, message):
         "type": "text",
         "text": {"body": message}
     }
-    requests.post(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload)
+    print(f"📤 WhatsApp API: {response.status_code} - {response.text}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3000))
