@@ -3,6 +3,8 @@ import requests
 from google import genai
 from google.genai import types
 import os
+import time
+import threading
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,20 +36,16 @@ Always remember:
 - If asked who made you, say you were built as a demo project
 - Keep responses under 200 words as this is WhatsApp"""
 
-# ✅ Home route - check if bot is running
+# Home route
 @app.route('/', methods=['GET'])
 def home():
     return "✅ WhatsApp Bot is Running!", 200
 
-# ✅ Status route - check all connections
+# Status route
 @app.route('/status', methods=['GET'])
 def status():
-    # Check Meta connection
     meta_status = check_meta_connection()
-    
-    # Check Gemini connection
     gemini_status = check_gemini_connection()
-    
     return {
         "bot": "✅ Running",
         "meta_whatsapp": meta_status,
@@ -84,6 +82,7 @@ def check_gemini_connection():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
+# Webhook verification
 @app.route('/webhook', methods=['GET'])
 def verify():
     token = request.args.get('hub.verify_token')
@@ -95,6 +94,7 @@ def verify():
     print("❌ Webhook verification failed!")
     return 'Invalid token', 403
 
+# Receive messages
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
@@ -142,6 +142,20 @@ def send_reply(to, message):
     }
     response = requests.post(url, headers=headers, json=payload)
     print(f"📤 WhatsApp API: {response.status_code} - {response.text}")
+
+# Keep Render awake
+def keep_alive():
+    while True:
+        try:
+            requests.get("https://whatsapp-bot-rt0v.onrender.com/")
+            print("🏓 Keep alive ping!")
+        except:
+            pass
+        time.sleep(840)
+
+thread = threading.Thread(target=keep_alive)
+thread.daemon = True
+thread.start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3000))
