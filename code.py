@@ -14,7 +14,6 @@ PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# Debug - check variables loaded
 print(f"✅ PHONE_NUMBER_ID: {PHONE_NUMBER_ID}")
 print(f"✅ ACCESS_TOKEN exists: {bool(ACCESS_TOKEN)}")
 print(f"✅ GEMINI_API_KEY exists: {bool(GEMINI_API_KEY)}")
@@ -34,6 +33,56 @@ Always remember:
 - You were built using Python, Flask, Meta WhatsApp API and Google Gemini AI
 - If asked who made you, say you were built as a demo project
 - Keep responses under 200 words as this is WhatsApp"""
+
+# ✅ Home route - check if bot is running
+@app.route('/', methods=['GET'])
+def home():
+    return "✅ WhatsApp Bot is Running!", 200
+
+# ✅ Status route - check all connections
+@app.route('/status', methods=['GET'])
+def status():
+    # Check Meta connection
+    meta_status = check_meta_connection()
+    
+    # Check Gemini connection
+    gemini_status = check_gemini_connection()
+    
+    return {
+        "bot": "✅ Running",
+        "meta_whatsapp": meta_status,
+        "gemini_ai": gemini_status,
+        "environment": {
+            "PHONE_NUMBER_ID": "✅ Set" if PHONE_NUMBER_ID else "❌ Missing",
+            "ACCESS_TOKEN": "✅ Set" if ACCESS_TOKEN else "❌ Missing",
+            "GEMINI_API_KEY": "✅ Set" if GEMINI_API_KEY else "❌ Missing",
+            "VERIFY_TOKEN": "✅ Set" if VERIFY_TOKEN else "❌ Missing"
+        }
+    }
+
+def check_meta_connection():
+    try:
+        url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}"
+        headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            return f"✅ Connected - Number: {data.get('display_phone_number', 'N/A')}"
+        else:
+            return f"❌ Failed - {response.status_code}: {response.json().get('error', {}).get('message', 'Unknown error')}"
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
+def check_gemini_connection():
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents="Say 'Gemini Connected!' in 3 words only",
+            config=types.GenerateContentConfig(max_output_tokens=10)
+        )
+        return f"✅ Connected - {response.text.strip()}"
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 @app.route('/webhook', methods=['GET'])
 def verify():
