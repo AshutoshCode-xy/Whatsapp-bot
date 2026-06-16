@@ -76,7 +76,7 @@ def check_meta_connection():
 def check_gemini_connection():
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             contents="Say 'Gemini Connected!' in 3 words only",
             config=types.GenerateContentConfig(max_output_tokens=10)
         )
@@ -116,7 +116,7 @@ def webhook():
 def ask_gemini(user_text):
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             contents=user_text,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
