@@ -143,19 +143,7 @@ def send_reply(to, message):
     response = requests.post(url, headers=headers, json=payload)
     print(f"📤 WhatsApp API: {response.status_code} - {response.text}")
 
-# Keep Render awake
-def keep_alive():
-    while True:
-        try:
-            requests.get("https://whatsapp-bot-rt0v.onrender.com/")
-            print("🏓 Keep alive ping!")
-        except:
-            pass
-        time.sleep(840)
 
-thread = threading.Thread(target=keep_alive)
-thread.daemon = True
-thread.start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3000))
