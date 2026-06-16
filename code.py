@@ -66,7 +66,7 @@ def ask_gemini(user_text):
         return f"⚠️ Demo Bot Error: {str(e)}"
 
 def send_reply(to, message):
-    url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
+    url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
